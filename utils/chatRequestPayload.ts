@@ -489,10 +489,10 @@ ${obRes.content}`;
     // ── 10. recency 钢印归位 + 组装 fullMessages ─────────
     // 本地语境分析只在 ChatApp 主回复使用：它告诉主模型“这句话此刻在做什么”，
     // 不指定具体记忆答案、不改变角色人格，也不进入其他 App 的专属写作提示。
-    if (input.recallEntryPoint === 'chat_app') {
-        volatileTail += renderLocalContextGuidance(recallTrace.contextAnalyzer);
-        volatileTail += renderInteractionAdaptationGuidance(recallTrace.interactionAdaptation?.analysis);
-        const engagementTrace = recallTrace.deepEngagement;
+if (input.recallEntryPoint === 'chat_app') {
+    volatileTail += renderLocalContextGuidance(recallTrace?.contextAnalyzer);
+    volatileTail += renderInteractionAdaptationGuidance(recallTrace?.interactionAdaptation?.analysis);
+    const engagementTrace = recallTrace?.deepEngagement;
         if (engagementTrace?.engine === 'legacy_depth') {
             volatileTail += renderDeepEngagementGuidance(engagementTrace.analysis as DeepEngagementAnalysis | undefined);
         } else if (engagementTrace?.engine === 'conversation_v2') {
