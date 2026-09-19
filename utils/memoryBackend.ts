@@ -21,7 +21,7 @@ const STORAGE_KEY = 'sully_memory_backend_config';
 const EVENT_NAME = 'sully_memory_backend_change';
 
 const DEFAULT_CONFIG: MemoryBackendConfig = {
-    mode: 'ombre_first',
+    mode: 'local',
     serverUrl: 'https://faces-from-utilize-administration.trycloudflare.com/mcp',
     apiKey: '',
     timeoutMs: 4000,
