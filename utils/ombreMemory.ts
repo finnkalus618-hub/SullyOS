@@ -1,8 +1,9 @@
-import { getMemoryBackendConfig } from './memoryBackend';
 import {
   callMcpTool,
   testMcpConnection,
   type McpServerConfig,
+  type McpToolDef,
+  type McpToolResult,
 } from './mcpClient';
 
 export interface OmbreRecallOptions {
