@@ -1,3 +1,4 @@
+import { getMemoryBackendConfig } from './memoryBackend';
 import {
   callMcpTool,
   testMcpConnection,
@@ -19,11 +20,13 @@ function createOmbreServer(): McpServerConfig {
   };
 }
 
-/** 动态读取 Ombre 当前实际开放的全部工具及参数 Schema。 */
-export async function getOmbreTools(): Promise<{
+export interface OmbreToolsResult {
   tools: McpToolDef[];
   error?: string;
-}> {
+}
+
+/** 动态读取 Ombre 当前实际开放的全部工具及参数 Schema。 */
+export async function getOmbreTools(): Promise<OmbreToolsResult> {
   const server = createOmbreServer();
 
   if (!server.url) {
@@ -39,20 +42,17 @@ export async function getOmbreTools(): Promise<{
     if (!connection.ok || !connection.tools) {
       return {
         tools: [],
-        error: connection.message,
+        error: connection.message || '无法读取 Ombre 工具',
       };
     }
 
-    return {
-      tools: connection.tools,
-    };
+    return { tools: connection.tools };
   } catch (error) {
     return {
       tools: [],
-      error:
-        error instanceof Error
-          ? error.message
-          : '读取 Ombre 工具失败',
+      error: error instanceof Error
+        ? error.message
+        : '读取 Ombre 工具失败',
     };
   }
 }
@@ -81,9 +81,7 @@ export async function executeOmbreTool(
       };
     }
 
-    const tool = connection.tools.find(
-      item => item.name === toolName,
-    );
+    const tool = connection.tools.find(item => item.name === toolName);
 
     if (!tool) {
       return {
@@ -93,19 +91,13 @@ export async function executeOmbreTool(
     }
 
     server.tools = connection.tools;
-
-    return await callMcpTool(
-      server,
-      tool.name,
-      args,
-    );
+    return await callMcpTool(server, tool.name, args);
   } catch (error) {
     return {
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : `调用 Ombre 工具 ${toolName} 失败`,
+      error: error instanceof Error
+        ? error.message
+        : `调用 Ombre 工具 ${toolName} 失败`,
     };
   }
 }
@@ -122,69 +114,12 @@ export interface OmbreRecallResult {
   error?: string;
 }
 
-export interface OmbreToolsResult {
-  tools: McpToolDef[];
-  error?: string;
-}
-
-/** 动态读取 Ombre 当前实际开放的全部工具及参数 Schema。 */
-export async function getOmbreTools(): Promise<OmbreToolsResult> {
-  const config = getMemoryBackendConfig();
-
-  const server: McpServerConfig = {
-    id: 'ombre-memory',
-    name: 'Ombre Brain',
-    url: config.serverUrl.trim(),
-    token: config.apiKey?.trim() || undefined,
-    enabled: true,
-    updatedAt: Date.now(),
-  };
-
-  if (!server.url) {
-    return {
-      tools: [],
-      error: '尚未填写 Ombre Brain 地址',
-    };
-  }
-
-  try {
-    const connection = await testMcpConnection(server);
-
-    if (!connection.ok || !connection.tools) {
-      return {
-        tools: [],
-        error: connection.message || '无法读取 Ombre 工具',
-      };
-    }
-
-    return {
-      tools: connection.tools,
-    };
-  } catch (error) {
-    return {
-      tools: [],
-      error:
-        error instanceof Error
-          ? error.message
-          : '读取 Ombre 工具失败',
-    };
-  }
-}
-
 /** 从 Ombre Brain 召回角色相关记忆。 */
 export async function recallOmbreMemory(
   options: OmbreRecallOptions,
 ): Promise<OmbreRecallResult> {
   const config = getMemoryBackendConfig();
-
-  const server: McpServerConfig = {
-    id: 'ombre-memory',
-    name: 'Ombre Brain',
-    url: config.serverUrl.trim(),
-    token: config.apiKey?.trim() || undefined,
-    enabled: true,
-    updatedAt: Date.now(),
-  };
+  const server = createOmbreServer();
 
   if (!server.url) {
     return {
@@ -224,10 +159,7 @@ export async function recallOmbreMemory(
       server,
       toolName,
       toolName === 'breath_search'
-        ? {
-            query,
-            max_results: 8,
-          }
+        ? { query, max_results: 8 }
         : {},
     );
 
@@ -238,10 +170,9 @@ export async function recallOmbreMemory(
       };
     }
 
-    const content =
-      typeof result.data === 'string'
-        ? result.data
-        : JSON.stringify(result.data ?? '', null, 2);
+    const content = typeof result.data === 'string'
+      ? result.data
+      : JSON.stringify(result.data ?? '', null, 2);
 
     return {
       content: content.slice(0, config.maxRecallChars),
@@ -249,13 +180,13 @@ export async function recallOmbreMemory(
   } catch (error) {
     return {
       content: '',
-      error:
-        error instanceof Error
-          ? error.message
-          : 'Ombre 记忆召回失败',
+      error: error instanceof Error
+        ? error.message
+        : 'Ombre 记忆召回失败',
     };
   }
 }
+
 export interface OmbreSaveOptions {
   charId: string;
   charName: string;
@@ -267,16 +198,7 @@ export interface OmbreSaveOptions {
 export async function saveOmbreMemory(
   options: OmbreSaveOptions,
 ): Promise<{ ok: boolean; error?: string }> {
-  const config = getMemoryBackendConfig();
-
-  const server: McpServerConfig = {
-    id: 'ombre-memory',
-    name: 'Ombre Brain',
-    url: config.serverUrl.trim(),
-    token: config.apiKey?.trim() || undefined,
-    enabled: true,
-    updatedAt: Date.now(),
-  };
+  const server = createOmbreServer();
 
   if (!server.url) {
     return {
@@ -297,9 +219,7 @@ export async function saveOmbreMemory(
 
     server.tools = connection.tools;
 
-    const growTool = connection.tools.find(
-      tool => tool.name === 'grow',
-    );
+    const growTool = connection.tools.find(tool => tool.name === 'grow');
 
     if (!growTool) {
       return {
@@ -315,9 +235,7 @@ export async function saveOmbreMemory(
       options.content.trim(),
     ].join('\n');
 
-    const properties =
-      growTool.inputSchema?.properties || {};
-
+    const properties = growTool.inputSchema?.properties || {};
     let args: Record<string, unknown>;
 
     if ('content' in properties) {
@@ -333,11 +251,7 @@ export async function saveOmbreMemory(
       };
     }
 
-    const result = await callMcpTool(
-      server,
-      'grow',
-      args,
-    );
+    const result = await callMcpTool(server, 'grow', args);
 
     if (!result.success) {
       return {
@@ -350,10 +264,10 @@ export async function saveOmbreMemory(
   } catch (error) {
     return {
       ok: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : 'Ombre 记忆写入失败',
+      error: error instanceof Error
+        ? error.message
+        : 'Ombre 记忆写入失败',
     };
   }
 }
+
