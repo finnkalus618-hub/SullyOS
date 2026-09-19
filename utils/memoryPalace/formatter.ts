@@ -100,7 +100,18 @@ export async function expandAndFormat(
     const pinnedNodes = allCharNodes.filter(n => n.pinnedUntil && n.pinnedUntil > now && !n.archived);
     const pinnedIds = new Set(pinnedNodes.map(n => n.id));
 
-    if (results.length === 0 && anticipations.length === 0 && pinnedNodes.length === 0) return '';
+    // 如果本地完全没有记忆，先尝试拉取 OB 记忆
+    if (results.length === 0 && anticipations.length === 0 && pinnedNodes.length === 0) {
+        const obMem = await fetchOmbreBrainBreath();
+        if (obMem) {
+            console.log('🧠 [OmbreBrain] 本地无记忆，直接注入 OB 核心记忆浮现');
+            return `## [核心长期记忆中枢 · OmbreBrain]
+${obMem}
+
+`;
+        }
+        return '';
+    }
 
     // 1. 按 eventBoxId 去重分组（同一 box 多次命中合并；保留命中里最高分作 box 分）
     //    boxItem: { boxId, topScore, hitNodeIds[] }
@@ -385,4 +396,3 @@ async function buildBoxItem(
         sourceIds,
     };
 }
-
