@@ -18,6 +18,55 @@ export interface OmbreRecallResult {
   error?: string;
 }
 
+export interface OmbreToolsResult {
+  tools: McpToolDef[];
+  error?: string;
+}
+
+/** 动态读取 Ombre 当前实际开放的全部工具及参数 Schema。 */
+export async function getOmbreTools(): Promise<OmbreToolsResult> {
+  const config = getMemoryBackendConfig();
+
+  const server: McpServerConfig = {
+    id: 'ombre-memory',
+    name: 'Ombre Brain',
+    url: config.serverUrl.trim(),
+    token: config.apiKey?.trim() || undefined,
+    enabled: true,
+    updatedAt: Date.now(),
+  };
+
+  if (!server.url) {
+    return {
+      tools: [],
+      error: '尚未填写 Ombre Brain 地址',
+    };
+  }
+
+  try {
+    const connection = await testMcpConnection(server);
+
+    if (!connection.ok || !connection.tools) {
+      return {
+        tools: [],
+        error: connection.message || '无法读取 Ombre 工具',
+      };
+    }
+
+    return {
+      tools: connection.tools,
+    };
+  } catch (error) {
+    return {
+      tools: [],
+      error:
+        error instanceof Error
+          ? error.message
+          : '读取 Ombre 工具失败',
+    };
+  }
+}
+
 /** 从 Ombre Brain 召回角色相关记忆。 */
 export async function recallOmbreMemory(
   options: OmbreRecallOptions,
