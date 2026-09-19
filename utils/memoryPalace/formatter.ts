@@ -1,3 +1,38 @@
+// === OMBRE-BRAIN 长期记忆中枢直连桥接 ===
+const OB_MCP_URL = 'https://faces-from-utilize-administration.trycloudflare.com/mcp';
+
+async function fetchOmbreBrainBreath(): Promise<string | null> {
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 4000); // 4秒超时防卡死
+
+        const response = await fetch(OB_MCP_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                jsonrpc: '2.0',
+                id: Date.now(),
+                method: 'tools/call',
+                params: {
+                    name: 'breath',
+                    arguments: {}
+                }
+            }),
+            signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+        if (!response.ok) return null;
+
+        const data = await response.json();
+        const text = data?.result?.content?.[0]?.text;
+        return text ? text.trim() : null;
+    } catch (e) {
+        console.warn('🧠 [OmbreBrain] Breath fetch skipped or timeout:', e);
+        return null;
+    }
+}
+
 /**
  * Memory Palace — 召回结果格式化（EventBox 感知）
  *
@@ -248,6 +283,18 @@ export async function expandAndFormat(
 
     const trimmed = output.trim();
     console.log(`🏰 [MemoryPalace] 本次召回 ${finalItems.length} 条 (${boxHits.size} 个 box + ${standaloneItems.length} 条独立)，${trimmed.length} 字`);
+
+    // === 优先从 OmbreBrain 唤醒核心记忆与精神锚点 ===
+    const obMemory = await fetchOmbreBrainBreath();
+    if (obMemory) {
+        console.log('🧠 [OmbreBrain] 成功注入 OB 核心记忆浮现');
+        return `## [核心长期记忆中枢 · OmbreBrain]
+${obMemory}
+
+` + (trimmed ? `## [辅助环境背景记忆]
+${trimmed}` : '');
+    }
+
     return trimmed;
 }
 
@@ -338,3 +385,4 @@ async function buildBoxItem(
         sourceIds,
     };
 }
+
