@@ -4424,3 +4424,43 @@ export interface LifeSimState {
     worldInventory?: Record<string, number>;
     worldGold?: number;
 }
+export type MemoryBackend = 'native' | 'ombre';
+
+export interface MemoryConfig {
+  backend: MemoryBackend;
+  ombreUrl?: string;
+  accessToken?: string;
+}
+
+export interface MemoryRecallOptions {
+  characterId: string;
+  query: string;
+  maxResults?: number;
+}
+
+export interface MemorySaveOptions {
+  characterId: string;
+  content: string;
+  longTerm?: boolean;
+}
+
+export interface MemoryProvider {
+  recall(options: MemoryRecallOptions): Promise<string>;
+  save(options: MemorySaveOptions): Promise<void>;
+  healthCheck(): Promise<boolean>;
+}
+
+export const DEFAULT_MEMORY_CONFIG: MemoryConfig = {
+  backend: 'native',
+};
+
+/** 为旧存档补齐默认值，确保升级后仍使用原生记忆库。 */
+export function normalizeMemoryConfig(
+  config?: Partial<MemoryConfig> | null,
+): MemoryConfig {
+  return {
+    backend: config?.backend === 'ombre' ? 'ombre' : 'native',
+    ombreUrl: config?.ombreUrl?.trim() || undefined,
+    accessToken: config?.accessToken?.trim() || undefined,
+  };
+}
