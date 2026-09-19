@@ -1,5 +1,5 @@
 import { getMemoryBackendConfig, setMemoryBackendConfig, type MemoryBackendMode } from '../utils/memoryBackend';
-
+import { checkOmbreHealth } from '../utils/ombreClient';
 import { useFirstUseGuideStep } from '../utils/firstUseGuide';
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { useOS } from '../context/OSContext';
