@@ -58,36 +58,6 @@ import { buildClaudeProxyCompatibilityBody, shouldRetryClaudeProxyCompatibility 
 import { routeMiniAppToolCall } from '../utils/miniAppToolRoute';
 import { applyEmotionEvalRaw, extractAssistantText } from '../utils/emotionApply';
 import { announceChatGen, CHAT_GEN_EVENTS } from '../utils/chatGenEvents';
-            // 普通聊天成功落库后，将本轮对话写入 Ombre。
-            if (isOmbreMemorySelected()) {
-                const userText =
-                    typeof latestUserMessage?.content === 'string'
-                        ? latestUserMessage.content.trim()
-                        : '';
-
-                const assistantText = sarReply.canonical.trim();
-
-                if (userText || assistantText) {
-                    void saveOmbreMemory({
-                        charId: char.id,
-                        charName: char.name,
-                        userName: userProfile?.name || '用户',
-                        content: [
-                            userText ? `${userProfile?.name || '用户'}：${userText}` : '',
-                            assistantText ? `${char.name}：${assistantText}` : '',
-                        ]
-                            .filter(Boolean)
-                            .join('\n'),
-                    }).then(result => {
-                        if (!result.ok) {
-                            console.warn(
-                                '[Ombre Memory] 本轮写入失败：',
-                                result.error,
-                            );
-                        }
-                    });
-                }
-            }
 import {
     advanceSARModuleAfterReply,
     createSARModuleEventMeta,
