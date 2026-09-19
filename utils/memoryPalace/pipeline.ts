@@ -1172,15 +1172,15 @@ function getEmbeddingConfig(charEmbeddingConfig?: any): EmbeddingConfig | null {
 
 export async function injectMemoryPalace(
     char: { memoryPalaceEnabled?: boolean; embeddingConfig?: any; activeBuffs?: any[]; personalityStyle?: string; ruminationTendency?: number; interactionAccommodation?: CharacterAccommodationPolicy; id: string; name?: string; memoryPalaceInjection?: string; roomPlatesInjection?: string },
-    if (!shouldWriteLocalMemory() && !options?.forceLocal) {
-        // 当前模式由 OB 全权接管记忆召回，跳过原生本地召回
-        return null;
-    }
     recentMessages?: Message[],
     queryHint?: string,
     userName?: string,
     traceContext?: { entryPoint?: RecallEntryPoint; formatterMaxOutputItems?: number },
-): Promise<RecallTrace> {
+): Promise<RecallTrace | null> {
+    if (!shouldWriteLocalMemory()) {
+        // 当前模式由 OB 全权接管记忆召回，跳过原生本地召回
+        return null;
+    }
     const hadPreviousMemory = Boolean(char.memoryPalaceInjection);
     const hadPreviousRoomPlates = Boolean(char.roomPlatesInjection);
     const trace = createRecallTrace({
@@ -2496,3 +2496,4 @@ export async function processMessageRange(
         processingLocks.delete(charId);
     }
 }
+
