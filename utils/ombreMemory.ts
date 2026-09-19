@@ -57,6 +57,59 @@ export async function getOmbreTools(): Promise<{
   }
 }
 
+/** 按当前 Schema 真实执行任意 Ombre 工具。 */
+export async function executeOmbreTool(
+  toolName: string,
+  args: Record<string, unknown> = {},
+): Promise<McpToolResult> {
+  const server = createOmbreServer();
+
+  if (!server.url) {
+    return {
+      success: false,
+      error: '尚未填写 Ombre Brain 地址',
+    };
+  }
+
+  try {
+    const connection = await testMcpConnection(server);
+
+    if (!connection.ok || !connection.tools) {
+      return {
+        success: false,
+        error: connection.message,
+      };
+    }
+
+    const tool = connection.tools.find(
+      item => item.name === toolName,
+    );
+
+    if (!tool) {
+      return {
+        success: false,
+        error: `Ombre Brain 没有提供工具：${toolName}`,
+      };
+    }
+
+    server.tools = connection.tools;
+
+    return await callMcpTool(
+      server,
+      tool.name,
+      args,
+    );
+  } catch (error) {
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : `调用 Ombre 工具 ${toolName} 失败`,
+    };
+  }
+}
+
 export interface OmbreRecallOptions {
   charId: string;
   charName: string;
