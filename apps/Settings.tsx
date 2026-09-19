@@ -2040,7 +2040,22 @@ const Settings: React.FC = () => {
                 })}
             </div>
         </section>
+          
+            <button
+                type="button"
+                onClick={async () => {
+                    const result = await checkOmbreHealth();
 
+                    addToast(
+                        result.message,
+                        result.ok ? 'success' : 'error',
+                    );
+                }}
+                className="w-full rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white active:scale-[0.98] transition-transform"
+            >
+                测试 Ombre Brain 连接
+            </button>
+          
         {/* 外观救急入口统一放在设置顶部，无需进入已被错误 CSS 遮住的聊天或日记。 */}
         <SettingsSection
             title="外观急救"
