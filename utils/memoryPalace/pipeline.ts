@@ -1,3 +1,4 @@
+import { shouldWriteLocalMemory } from '../memoryBackend';
 import { loadRangeMessageContents } from './rangeMessagePage';
 import { loadCharacterContextMessages } from '../chatContextRange';
 /**
@@ -1171,6 +1172,10 @@ function getEmbeddingConfig(charEmbeddingConfig?: any): EmbeddingConfig | null {
 
 export async function injectMemoryPalace(
     char: { memoryPalaceEnabled?: boolean; embeddingConfig?: any; activeBuffs?: any[]; personalityStyle?: string; ruminationTendency?: number; interactionAccommodation?: CharacterAccommodationPolicy; id: string; name?: string; memoryPalaceInjection?: string; roomPlatesInjection?: string },
+    if (!shouldWriteLocalMemory() && !options?.forceLocal) {
+        // 当前模式由 OB 全权接管记忆召回，跳过原生本地召回
+        return null;
+    }
     recentMessages?: Message[],
     queryHint?: string,
     userName?: string,
