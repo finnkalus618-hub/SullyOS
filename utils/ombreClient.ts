@@ -1,68 +1,58 @@
 import { getMemoryBackendConfig } from './memoryBackend';
+import {
+  testMcpConnection,
+  type McpServerConfig,
+} from './mcpClient';
 
 export interface OmbreHealthResult {
   ok: boolean;
   message: string;
 }
 
-/** 检查 Ombre Brain 服务是否在线。 */
+/** 测试 Ombre Brain 的真实 MCP 握手和工具发现。 */
 export async function checkOmbreHealth(): Promise<OmbreHealthResult> {
   const config = getMemoryBackendConfig();
+  const url = config.serverUrl.trim();
 
-  try {
-    const baseUrl = config.serverUrl
-      .trim()
-      .replace(/\/mcp\/?$/, '')
-      .replace(/\/+$/, '');
-
-    if (!baseUrl) {
-      return {
-        ok: false,
-        message: '尚未填写 Ombre Brain 地址',
-      };
-    }
-
-    const controller = new AbortController();
-    const timer = window.setTimeout(
-      () => controller.abort(),
-      config.timeoutMs,
-    );
-
-    try {
-      const response = await fetch(`${baseUrl}/health`, {
-        method: 'GET',
-        signal: controller.signal,
-        headers: {
-          Accept: 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        return {
-          ok: false,
-          message: `连接失败：HTTP ${response.status}`,
-        };
-      }
-
-      const data = await response.json();
-
-      return {
-        ok: data?.status === 'ok',
-        message:
-          data?.status === 'ok'
-            ? 'Ombre Brain 连接正常'
-            : 'Ombre Brain 返回了异常状态',
-      };
-    } finally {
-      window.clearTimeout(timer);
-    }
-  } catch (error) {
+  if (!url) {
     return {
       ok: false,
-      message:
-        error instanceof Error
-          ? `连接失败：${error.message}`
-          : '连接失败：未知错误',
+      message: '尚未填写 Ombre Brain 地址',
     };
   }
+
+  const server: McpServerConfig = {
+    id: 'ombre-memory',
+    name: 'Ombre Brain',
+    url,
+    token: config.apiKey?.trim() || undefined,
+    enabled: true,
+    updatedAt: Date.now(),
+  };
+
+  const result = await testMcpConnection(server);
+
+  if (!result.ok) {
+    return {
+      ok: false,
+      message: `Ombre MCP 连接失败：${result.message}`,
+    };
+  }
+
+  const toolNames = (result.tools || []).map(tool => tool.name);
+
+  if (
+    !toolNames.includes('breath') &&
+    !toolNames.includes('breath_search')
+  ) {
+    return {
+      ok: false,
+      message: '连接成功，但没有发现 Ombre 记忆工具',
+    };
+  }
+
+  return {
+    ok: true,
+    message: `Ombre MCP 连接正常，发现 ${toolNames.length} 个工具`,
+  };
 }
