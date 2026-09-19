@@ -1,8 +1,8 @@
 import {
-    isOmbreMemorySelected,
-    shouldWriteLocalMemory,
-} from '../utils/memoryBackend';
-import { saveOmbreMemory } from '../utils/ombreMemory';
+    saveOmbreMemory,
+    getOmbreTools,
+    executeOmbreTool,
+} from '../utils/ombreMemory';
 import { useState, useRef, useEffect, useSyncExternalStore, MutableRefObject } from 'react';
 import { CharacterProfile, UserProfile, Message, Emoji, EmojiCategory, GroupProfile, RealtimeConfig, CharacterBuff, Amsg2ExpiredNoticeRecord } from '../types';
 import { DB } from '../utils/db';
