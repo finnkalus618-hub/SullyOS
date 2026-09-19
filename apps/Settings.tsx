@@ -1,3 +1,4 @@
+import { getMemoryBackendConfig, setMemoryBackendConfig, type MemoryBackendMode } from '../utils/memoryBackend';
 
 import { useFirstUseGuideStep } from '../utils/firstUseGuide';
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
@@ -3426,6 +3427,53 @@ const Settings: React.FC = () => {
             </p>
         </section>
 
+        
+        {/* === 长期记忆系统模式切换 (OmbreBrain / 原生记忆宫殿) === */}
+        <section className="bg-white/80 backdrop-blur-md rounded-2xl p-4 border border-indigo-100 shadow-sm">
+            <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                    <span className="text-base">🧠</span>
+                    <h2 className="text-xs font-bold text-slate-700">长期记忆中枢模式</h2>
+                </div>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 font-medium">双轨总线</span>
+            </div>
+            <p className="text-[11px] text-slate-500 mb-3 leading-relaxed">
+                自由切换角色的记忆大脑。选 OB 模式时由云端记忆库驱动；切回原生时使用手机本地记忆宫殿。
+            </p>
+            <div className="grid grid-cols-1 gap-2 mb-3">
+                {[
+                    { id: 'ombre_first', title: '🌟 OmbreBrain 优先 (推荐)', desc: '主用云端 OB 记忆，掉线或超时自动平滑回退本地' },
+                    { id: 'ombre_only', title: '⚡ 纯血 OmbreBrain', desc: '完全由云端 OB 接管，绝不产生本地死板长期数据' },
+                    { id: 'local', title: '🏰 SullyOS 原生记忆宫殿', desc: '完全使用手机本地 IndexedDB 原生记忆与总结' }
+                ].map((item) => {
+                    const currentMode = getMemoryBackendConfig().mode;
+                    const isSelected = currentMode === item.id;
+                    return (
+                        <button
+                            key={item.id}
+                            onClick={() => {
+                                setMemoryBackendConfig({ mode: item.id as MemoryBackendMode });
+                                addToast(`已切换至：${item.title}`, 'success');
+                            }}
+                            className={`flex flex-col items-start p-2.5 rounded-xl border text-left transition-all ${
+                                isSelected
+                                    ? 'bg-indigo-50/80 border-indigo-300 ring-2 ring-indigo-200 shadow-sm'
+                                    : 'bg-white/60 border-slate-200 hover:bg-slate-50'
+                            }`}
+                        >
+                            <div className="flex items-center justify-between w-full">
+                                <span className={`text-xs font-bold ${isSelected ? 'text-indigo-900' : 'text-slate-700'}`}>
+                                    {item.title}
+                                </span>
+                                {isSelected && <span className="text-xs text-indigo-600 font-bold">✓ 生效中</span>}
+                            </div>
+                            <span className="text-[10px] text-slate-500 mt-0.5">{item.desc}</span>
+                        </button>
+                    );
+                })}
+            </div>
+        </section>
+
         {/* 自定义网络代理 — 刻意低调的高级入口。默认折叠，不主动指引基本发现不了。
             普通用户无需配置：默认走作者部署的公共 Worker，所有功能开箱即用。 */}
         {!showProxyConfig ? (
@@ -4666,3 +4714,4 @@ const Settings: React.FC = () => {
 };
 
 export default Settings;
+
